@@ -87,7 +87,7 @@ class VeSyncOutlet(VeSyncBaseDevice):
 
     def update_energy(self, bypass_check: bool = False):
         """Build weekly, monthly and yearly dictionaries."""
-        if bypass_check or (not bypass_check and self.update_time_check):
+        if bypass_check or self.update_time_check:
             self.update_energy_ts = time.time()
             self.get_weekly_energy()
             if 'week' in self.energy:
@@ -179,10 +179,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def get_details(self) -> None:
         """Get 7A outlet details."""
         r, _ = Helpers.call_api(
-            '/v1/device/' + self.cid + '/detail',
+            f'/v1/device/{self.cid}/detail',
             'get',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if r is not None and all(x in r for x in self.det_keys):
             self.device_status = r.get('deviceStatus', self.device_status)
@@ -200,10 +201,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def get_weekly_energy(self) -> None:
         """Get 7A outlet weekly energy info and buld weekly energy dict."""
         r, _ = Helpers.call_api(
-            '/v1/device/' + self.cid + '/energy/week',
+            f'/v1/device/{self.cid}/energy/week',
             'get',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if r is not None and all(x in r for x in self.energy_keys):
             self.energy['week'] = Helpers.build_energy_dict(r)
@@ -213,10 +215,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def get_monthly_energy(self) -> None:
         """Get 7A outlet monthly energy info and buld monthly energy dict."""
         r, _ = Helpers.call_api(
-            '/v1/device/' + self.cid + '/energy/month',
+            f'/v1/device/{self.cid}/energy/month',
             'get',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if r is not None and all(x in r for x in self.energy_keys):
             self.energy['month'] = Helpers.build_energy_dict(r)
@@ -226,10 +229,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def get_yearly_energy(self) -> None:
         """Get 7A outlet yearly energy info and build yearly energy dict."""
         r, _ = Helpers.call_api(
-            '/v1/device/' + self.cid + '/energy/year',
+            f'/v1/device/{self.cid}/energy/year',
             'get',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if r is not None and all(x in r for x in self.energy_keys):
             self.energy['year'] = Helpers.build_energy_dict(r)
@@ -239,10 +243,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def turn_on(self) -> bool:
         """Turn 7A outlet on - return True if successful."""
         _, status_code = Helpers.call_api(
-            '/v1/wifi-switch-1.3/' + self.cid + '/status/on',
+            f'/v1/wifi-switch-1.3/{self.cid}/status/on',
             'put',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if status_code is not None and status_code == 200:
             self.device_status = 'on'
@@ -254,10 +259,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def turn_off(self) -> bool:
         """Turn 7A outlet off - return True if successful."""
         _, status_code = Helpers.call_api(
-            '/v1/wifi-switch-1.3/' + self.cid + '/status/off',
+            f'/v1/wifi-switch-1.3/{self.cid}/status/off',
             'put',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if status_code is not None and status_code == 200:
             self.device_status = 'off'
@@ -269,10 +275,11 @@ class VeSyncOutlet7A(VeSyncOutlet):
     def get_config(self) -> None:
         """Get 7A outlet configuration info."""
         r, _ = Helpers.call_api(
-            '/v1/device/' + self.cid + '/configurations',
+            f'/v1/device/{self.cid}/configurations',
             'get',
             headers=Helpers.req_headers(self.manager),
         )
+
 
         if 'currentFirmVersion' in r:
             self.config = Helpers.build_config_dict(r)

@@ -110,7 +110,7 @@ LOGIN_RET_BODY = (
 
 
 def login_call_body(email, password):
-    json = {
+    return {
         'acceptLanguage': 'en',
         'appVersion': APP_VERSION,
         'devToken': '',
@@ -123,7 +123,6 @@ def login_call_body(email, password):
         'traceId': TRACE_ID,
         'userType': '1',
     }
-    return json
 
 
 LIST_CONF_7A = {

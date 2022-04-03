@@ -94,13 +94,15 @@ class TestVesync7ASwitch(object):
         on = vswitch7a.turn_on()
         head = helpers.req_headers(self.vesync_obj)
         self.mock_api.assert_called_with(
-            '/v1/wifi-switch-1.3/' + vswitch7a.cid + '/status/on', 'put', headers=head
+            f'/v1/wifi-switch-1.3/{vswitch7a.cid}/status/on', 'put', headers=head
         )
+
         assert on
         off = vswitch7a.turn_off()
         self.mock_api.assert_called_with(
-            '/v1/wifi-switch-1.3/' + vswitch7a.cid + '/status/off', 'put', headers=head
+            f'/v1/wifi-switch-1.3/{vswitch7a.cid}/status/off', 'put', headers=head
         )
+
         assert off
 
     def test_7a_onoff_fail(self, api_mock):
@@ -116,10 +118,11 @@ class TestVesync7ASwitch(object):
         vswitch7a = VeSyncOutlet7A(DEV_LIST_DETAIL, self.vesync_obj)
         vswitch7a.get_weekly_energy()
         self.mock_api.assert_called_with(
-            '/v1/device/' + vswitch7a.cid + '/energy/week',
+            f'/v1/device/{vswitch7a.cid}/energy/week',
             'get',
             headers=helpers.req_headers(self.vesync_obj),
         )
+
         energy_dict = vswitch7a.energy['week']
         assert energy_dict['energy_consumption_of_today'] == 1
         assert energy_dict['cost_per_kwh'] == 1
@@ -133,10 +136,11 @@ class TestVesync7ASwitch(object):
         vswitch7a = VeSyncOutlet7A(DEV_LIST_DETAIL, self.vesync_obj)
         vswitch7a.get_monthly_energy()
         self.mock_api.assert_called_with(
-            '/v1/device/' + vswitch7a.cid + '/energy/month',
+            f'/v1/device/{vswitch7a.cid}/energy/month',
             'get',
             headers=helpers.req_headers(self.vesync_obj),
         )
+
         energy_dict = vswitch7a.energy['month']
         assert energy_dict['energy_consumption_of_today'] == 1
         assert energy_dict['cost_per_kwh'] == 1
@@ -150,10 +154,11 @@ class TestVesync7ASwitch(object):
         vswitch7a = VeSyncOutlet7A(DEV_LIST_DETAIL, self.vesync_obj)
         vswitch7a.get_yearly_energy()
         self.mock_api.assert_called_with(
-            '/v1/device/' + vswitch7a.cid + '/energy/year',
+            f'/v1/device/{vswitch7a.cid}/energy/year',
             'get',
             headers=helpers.req_headers(self.vesync_obj),
         )
+
         energy_dict = vswitch7a.energy['year']
         assert energy_dict['energy_consumption_of_today'] == 1
         assert energy_dict['cost_per_kwh'] == 1

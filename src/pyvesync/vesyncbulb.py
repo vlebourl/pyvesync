@@ -34,8 +34,7 @@ __all__: list = list(bulb_modules.values()) + ['bulb_modules']
 def pct_to_kelvin(pct: float,
                   max_k: int = 6500, min_k: int = 2700) -> float:
     """Convert percent to kelvin."""
-    kelvin = ((max_k - min_k) * pct / 100) + min_k
-    return kelvin
+    return ((max_k - min_k) * pct / 100) + min_k
 
 
 class VeSyncBulb(VeSyncBaseDevice):
@@ -78,23 +77,17 @@ class VeSyncBulb(VeSyncBaseDevice):
     @property
     def dimmable_feature(self) -> bool:
         """Return true if dimmable bulb."""
-        if 'dimmable' in self.features:
-            return True
-        return False
+        return 'dimmable' in self.features
 
     @property
     def color_temp_feature(self) -> bool:
         """Return true if bulb supports color temperature changes."""
-        if 'color_temp' in feature_dict[self.device_type]:
-            return True
-        return False
+        return 'color_temp' in feature_dict[self.device_type]
 
     @property
     def rgb_shift_feature(self) -> bool:
         """Return True if bulb supports changing color."""
-        if 'rgb_shift' in feature_dict[self.device_type]:
-            return True
-        return False
+        return 'rgb_shift' in feature_dict[self.device_type]
 
     @abstractmethod
     def get_details(self) -> None:
@@ -131,11 +124,10 @@ class VeSyncBulb(VeSyncBaseDevice):
     def display(self) -> None:
         """Return formatted bulb info to stdout."""
         super().display()
-        if self.connection_status == 'online':
-            if self.dimmable_feature:
-                disp1 = [('Brightness: ', self.brightness, '%')]
-                for line in disp1:
-                    print(f'{line[0]:.<17} {line[1]} {line[2]}')
+        if self.connection_status == 'online' and self.dimmable_feature:
+            disp1 = [('Brightness: ', self.brightness, '%')]
+            for line in disp1:
+                print(f'{line[0]:.<17} {line[1]} {line[2]}')
 
     def displayJSON(self) -> str:
         """Return bulb device info in JSON format."""
