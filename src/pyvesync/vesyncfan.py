@@ -133,10 +133,7 @@ class VeSyncAirBypass(VeSyncBaseDevice):
                 self.device_type)
             raise Exception
         self.modes = self.config_dict['modes']
-        if 'air_quality' in self.features:
-            self.air_quality_feature = True
-        else:
-            self.air_quality_feature = False
+        self.air_quality_feature = 'air_quality' in self.features
         self.details: Dict[str, Union[str, int, float, bool]] = {
             'filter_life': 0,
             'mode': 'manual',
@@ -145,7 +142,7 @@ class VeSyncAirBypass(VeSyncBaseDevice):
             'child_lock': False,
             'night_light': 'off',
         }
-        if self.air_quality_feature is True:
+        if self.air_quality_feature:
             self.details['ait_quality'] = 0
         self.config: Dict[str, Union[str, int, float, bool]] = {
             'display': False,
@@ -179,10 +176,7 @@ class VeSyncAirBypass(VeSyncBaseDevice):
     def build_purifier_dict(self, dev_dict: dict) -> None:
         """Build Bypass purifier status dictionary."""
         self.enabled = dev_dict.get('enabled', False)
-        if self.enabled:
-            self.device_status = 'on'
-        else:
-            self.device_status = 'off'
+        self.device_status = 'on' if self.enabled else 'off'
         self.details['filter_life'] = dev_dict.get('filter_life', 0)
         self.mode = dev_dict.get('mode', 'manual')
         self.speed = dev_dict.get('level', 0)
@@ -226,10 +220,7 @@ class VeSyncAirBypass(VeSyncBaseDevice):
             logger.debug('Error in purifier response')
             return
         outer_result = r.get('result', {})
-        inner_result = None
-
-        if outer_result:
-            inner_result = r.get('result', {}).get('result')
+        inner_result = r.get('result', {}).get('result') if outer_result else None
         if inner_result is not None and Helpers.code_check(r):
             if outer_result.get('code') == 0:
                 self.build_purifier_dict(inner_result)
@@ -260,12 +251,11 @@ class VeSyncAirBypass(VeSyncBaseDevice):
             new_speed = speed
             if current_speed == new_speed:
                 return True
+        elif current_speed == speeds[-1]:
+            new_speed = speeds[0]
         else:
-            if current_speed == speeds[-1]:
-                new_speed = speeds[0]
-            else:
-                current_index = speeds.index(current_speed)
-                new_speed = speeds[current_index + 1]
+            current_index = speeds.index(current_speed)
+            new_speed = speeds[current_index + 1]
 
         body = Helpers.req_body(self.manager, 'devicestatus')
         body['uuid'] = self.uuid
@@ -416,10 +406,7 @@ class VeSyncAirBypass(VeSyncBaseDevice):
         )
 
         if r is not None and Helpers.code_check(r):
-            if toggle:
-                self.device_status = 'on'
-            else:
-                self.device_status = 'off'
+            self.device_status = 'on' if toggle else 'off'
             return True
         logger.debug("Error toggling purifier - %s",
                      self.device_name)
@@ -666,43 +653,43 @@ class VeSyncAir131(VeSyncBaseDevice):
 
     def turn_on(self) -> bool:
         """Turn Air Purifier on."""
-        if self.device_status != 'on':
-            body = Helpers.req_body(self.manager, 'devicestatus')
-            body['uuid'] = self.uuid
-            body['status'] = 'on'
-            head = Helpers.req_headers(self.manager)
-
-            r, _ = Helpers.call_api(
-                '/131airPurifier/v1/device/deviceStatus', 'put',
-                json=body, headers=head
-            )
-
-            if r is not None and Helpers.code_check(r):
-                self.device_status = 'on'
-                return True
-            logger.debug('Error turning %s on', self.device_name)
+        if self.device_status == 'on':
             return False
+        body = Helpers.req_body(self.manager, 'devicestatus')
+        body['uuid'] = self.uuid
+        body['status'] = 'on'
+        head = Helpers.req_headers(self.manager)
+
+        r, _ = Helpers.call_api(
+            '/131airPurifier/v1/device/deviceStatus', 'put',
+            json=body, headers=head
+        )
+
+        if r is not None and Helpers.code_check(r):
+            self.device_status = 'on'
+            return True
+        logger.debug('Error turning %s on', self.device_name)
         return False
 
     def turn_off(self) -> bool:
         """Turn Air Purifier Off."""
-        if self.device_status == 'on':
-            body = Helpers.req_body(self.manager, 'devicestatus')
-            body['uuid'] = self.uuid
-            body['status'] = 'off'
-            head = Helpers.req_headers(self.manager)
+        if self.device_status != 'on':
+            return True
+        body = Helpers.req_body(self.manager, 'devicestatus')
+        body['uuid'] = self.uuid
+        body['status'] = 'off'
+        head = Helpers.req_headers(self.manager)
 
-            r, _ = Helpers.call_api(
-                '/131airPurifier/v1/device/deviceStatus', 'put',
-                json=body, headers=head
-            )
+        r, _ = Helpers.call_api(
+            '/131airPurifier/v1/device/deviceStatus', 'put',
+            json=body, headers=head
+        )
 
-            if r is not None and Helpers.code_check(r):
-                self.device_status = 'off'
-                return True
-            logger.debug('Error turning %s off', self.device_name)
-            return False
-        return True
+        if r is not None and Helpers.code_check(r):
+            self.device_status = 'off'
+            return True
+        logger.debug('Error turning %s off', self.device_name)
+        return False
 
     def auto_mode(self) -> bool:
         """Set mode to auto."""
@@ -742,18 +729,14 @@ class VeSyncAir131(VeSyncBaseDevice):
         if speed is not None:
             if speed == level:
                 return True
-            if speed in [1, 2, 3]:
+            if speed in {1, 2, 3}:
                 body['level'] = speed
             else:
                 logger.debug('Invalid fan speed for %s',
                              self.device_name)
                 return False
         else:
-            if (level + 1) > 3:
-                body['level'] = 1
-            else:
-                body['level'] = int(level + 1)
-
+            body['level'] = 1 if level > 2 else int(level + 1)
         r, _ = Helpers.call_api(
             '/131airPurifier/v1/device/updateSpeed', 'put',
             json=body, headers=head
@@ -770,7 +753,7 @@ class VeSyncAir131(VeSyncBaseDevice):
         head = Helpers.req_headers(self.manager)
         body = Helpers.req_body(self.manager, 'devicestatus')
         body['uuid'] = self.uuid
-        if mode != self.mode and mode in ['sleep', 'auto', 'manual']:
+        if mode != self.mode and mode in {'sleep', 'auto', 'manual'}:
             body['mode'] = mode
             if mode == 'manual':
                 body['level'] = 1
@@ -840,10 +823,7 @@ class VeSyncHumid200300S(VeSyncBaseDevice):
         else:
             self.warm_mist_feature = False
             self.warm_mist_levels = []
-        if 'nightlight' in self.config_dict.get('features', []):
-            self.night_light = True
-        else:
-            self.night_light = False
+        self.night_light = 'nightlight' in self.config_dict.get('features', [])
         self.details: Dict[str, Union[str, int, float]] = {
             'humidity': 0,
             'mist_virtual_level': 0,
@@ -855,7 +835,7 @@ class VeSyncHumid200300S(VeSyncBaseDevice):
             'display': False,
             'automatic_stop_reach_target': False,
         }
-        if self.night_light is True:
+        if self.night_light:
             self.details['night_light_brightness'] = 0
         self.config: Dict[str, Union[str, int, float]] = {
             'auto_target_humidity': 0,
@@ -991,11 +971,7 @@ class VeSyncHumid200300S(VeSyncBaseDevice):
         )
 
         if r is not None and Helpers.code_check(r):
-            if toggle:
-                self.device_status = 'on'
-            else:
-                self.device_status = 'off'
-
+            self.device_status = 'on' if toggle else 'off'
             return True
         logger.debug("Error toggling 300S humidifier - %s", self.device_name)
         return False
@@ -1210,8 +1186,7 @@ class VeSyncHumid200300S(VeSyncBaseDevice):
                          'please ensure %s model '
                          'is in configuration dictionary', self.device_type)
             call_str = 'auto'
-        set_auto = self.set_humidity_mode(call_str)
-        return set_auto
+        return self.set_humidity_mode(call_str)
 
     def set_manual_mode(self):
         """Set humifier to manual mode with 1 mist level."""
@@ -1272,17 +1247,12 @@ class VeSyncHumid200300S(VeSyncBaseDevice):
     @property
     def auto_enabled(self):
         """Auto mode is enabled."""
-        if self.details.get('mode') == 'auto' \
-                or self.details.get('mode') == 'humidity':
-            return True
-        return False
+        return self.details.get('mode') in ['auto', 'humidity']
 
     @property
     def warm_mist_enabled(self):
         """Warm mist feature enabled."""
-        if self.warm_mist_feature:
-            return self.details['warm_mist_enabled']
-        return False
+        return self.details['warm_mist_enabled'] if self.warm_mist_feature else False
 
     def display(self) -> None:
         """Return formatted device info to stdout."""

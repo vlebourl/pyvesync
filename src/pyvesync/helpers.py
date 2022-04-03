@@ -28,7 +28,7 @@ class Helpers:
     @staticmethod
     def req_headers(manager) -> dict:
         """Build header for api requests."""
-        headers = {
+        return {
             'accept-language': 'en',
             'accountId': manager.account_id,
             'appVersion': APP_VERSION,
@@ -36,7 +36,6 @@ class Helpers:
             'tk': manager.token,
             'tz': manager.time_zone,
         }
-        return headers
 
     @staticmethod
     def req_body_base(manager) -> dict:
@@ -136,9 +135,7 @@ class Helpers:
     def calculate_hex(hex_string) -> float:
         """Credit for conversion to itsnotlupus/vesync_wsproxy."""
         hex_conv = hex_string.split(':')
-        converted_hex = (int(hex_conv[0], 16) + int(hex_conv[1], 16)) / 8192
-
-        return converted_hex
+        return (int(hex_conv[0], 16) + int(hex_conv[1], 16)) / 8192
 
     @staticmethod
     def hash_password(string) -> str:
@@ -186,9 +183,7 @@ class Helpers:
     @staticmethod
     def code_check(r: dict) -> bool:
         """Test if code == 0 for successful API call."""
-        if isinstance(r, dict) and r.get('code') == 0:
-            return True
-        return False
+        return isinstance(r, dict) and r.get('code') == 0
 
     @staticmethod
     def build_details_dict(r: dict) -> dict:

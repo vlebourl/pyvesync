@@ -42,11 +42,16 @@ class TestVesync(unittest.TestCase):
         for mod in modules:
             import_mod = importlib.import_module(mod)
 
-            missing = set(n for n in import_mod.__all__
-                          if getattr(import_mod, n, None) is None)
+            missing = {
+                n
+                for n in import_mod.__all__
+                if getattr(import_mod, n, None) is None
+            }
+
             self.assertFalse(
-                missing, msg="__all__ contains unresolved names: %s" % (
-                    ", ".join(missing),))
+                missing,
+                msg=f'__all__ contains unresolved names: {", ".join(missing)}',
+            )
 
     def test_username(self):
         """Test invalid username arguments."""

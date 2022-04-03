@@ -165,9 +165,8 @@ class VeSync:  # pylint: disable=function-redefined
     @staticmethod
     def set_dev_id(devices: list) -> list:
         """Correct devices without cid or uuid."""
-        dev_num = 0
         dev_rem = []
-        for dev in devices:
+        for dev_num, dev in enumerate(devices):
             if dev.get('cid') is None:
                 if dev.get('macID') is not None:
                     dev['cid'] = dev['macID']
@@ -177,7 +176,6 @@ class VeSync:  # pylint: disable=function-redefined
                     dev_rem.append(dev_num)
                     logger.warning('Device with no ID  - %s',
                                    dev.get('deviceName'))
-            dev_num += 1
             if dev_rem:
                 devices = [i for j, i in enumerate(
                             devices) if j not in dev_rem]
@@ -187,12 +185,9 @@ class VeSync:  # pylint: disable=function-redefined
         """Instantiate Device Objects."""
         devices = VeSync.set_dev_id(dev_list)
 
-        num_devices = 0
-        for _, v in self._dev_list.items():
-            if isinstance(v, list):
-                num_devices += len(v)
-            else:
-                num_devices += 1
+        num_devices = sum(
+            len(v) if isinstance(v, list) else 1 for _, v in self._dev_list.items()
+        )
 
         if not devices:
             logger.warning('No devices found in api return')
@@ -206,7 +201,7 @@ class VeSync:  # pylint: disable=function-redefined
 
         detail_keys = ['deviceType', 'deviceName', 'deviceStatus']
         for dev in devices:
-            if not all(k in dev for k in detail_keys):
+            if any(k not in dev for k in detail_keys):
                 logger.debug('Error adding device')
                 continue
             dev_type = dev.get('deviceType')
@@ -254,10 +249,10 @@ class VeSync:  # pylint: disable=function-redefined
         """Return True if log in request succeeds."""
         user_check = isinstance(self.username, str) and len(self.username) > 0
         pass_check = isinstance(self.password, str) and len(self.password) > 0
-        if user_check is False:
+        if not user_check:
             logger.error('Username invalid')
             return False
-        if pass_check is False:
+        if not pass_check:
             logger.error('Password invalid')
             return False
 
@@ -277,12 +272,10 @@ class VeSync:  # pylint: disable=function-redefined
 
     def device_time_check(self) -> bool:
         """Test if update interval has been exceeded."""
-        if (
+        return (
             self.last_update_ts is None
             or (time.time() - self.last_update_ts) > self.update_interval
-        ):
-            return True
-        return False
+        )
 
     def update(self) -> None:
         """Fetch updated information about devices."""
